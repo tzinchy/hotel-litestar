@@ -1,7 +1,13 @@
 [project]
 name = "hotel-litestar"
 version = "0.1.0"
-description = "Add your description here"
+description = "System provide api for hirng people at hotel industry"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "alembic>=1.18.4",
+    "asyncpg>=0.31.0",
+    "litestar>=2.21.1",
+    "pydantic-settings>=2.13.1",
+    "uvicorn>=0.42.0",
+]
