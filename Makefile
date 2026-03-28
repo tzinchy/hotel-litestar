@@ -7,7 +7,7 @@ run-infra:
 	docker-compose up -d
 
 stop-infra:
-	docker-compose down
+	docker-compose down && docker compose rm -f
 
 app:
 	uv run uvicorn src.main:app --reload

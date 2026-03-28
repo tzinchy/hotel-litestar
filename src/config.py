@@ -6,13 +6,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore", frozen=True
     )
-    DB: PostgresDsn = PostgresDsn("postgresql+asyncpg://postgres:@localhost:5432")
-
-    @field_validator("DB")
-    @classmethod
-    def validate_db_connection(cls, value):
-        assert value.path and len(value.path) > 1, "database must be provided"
-        return value
+    DB: PostgresDsn = PostgresDsn(
+        "postgresql+asyncpg://postgres:password@localhost:5432"
+    )
 
 
 settings = Settings()
