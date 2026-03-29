@@ -1,9 +1,8 @@
-from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from enum import StrEnum
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import Computed, Date, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, MappedColumn
@@ -23,28 +22,34 @@ class UserStatus(StrEnum):
     INVITED = "invited"
 
 
-class CardStatus(StrEnum):
-    USER_SET = "user_set"
-    MANAGER_VERIFYED = "manager_verifyed"
-    MANAGER_DECLINED = "manager_declined"
+class UserAccountStatus(StrEnum):
+    BASE = "base"
+    PREMIUM = "premium"
 
 
-@dataclass
-class MedCard:
-    status: CardStatus
-    created_at: date
-    updated_at: datetime
-
-
-class MedCartType(StrEnum):
+class MedCardType(StrEnum):
     BASE = "base"
     FOOD = "food"
 
 
+class Role(StrEnum):
+    ADMIN = "admin"
+    MAIN_MANAGER = "main_manager"
+    MANAGER = "manager"
+    CANDIDATE = "candidate"
+
+
+class MedCard(Base):
+    __tablename__ = "med_cards"
+    med_card_id: Mapped[int] = MappedColumn(Integer, primary_key=True)
+    medcard_name: Mapped[str] = MappedColumn(String, nullable=False)
+    med_card_type: Mapped[MedCardType] = MappedColumn(String, nullable=False)
+
+
 class User(Base):
     __tablename__ = "users"
-    user_id: Mapped[UUID] = MappedColumn(PG_UUID, primary_key=True)
-    username: Mapped[str] = MappedColumn(String, nullable=False, unique=True)
+    user_uuid: Mapped[UUID] = MappedColumn(PG_UUID, primary_key=True)
+    username: Mapped[str] = MappedColumn(String, nullable=True, unique=True)
     password: Mapped[str] = MappedColumn(String, nullable=False)
     first_name: Mapped[str] = MappedColumn(String, nullable=False)
     middle_name: Mapped[str | None] = MappedColumn(String, nullable=True)
@@ -54,8 +59,31 @@ class User(Base):
     city: Mapped[str] = MappedColumn(String, nullable=False)
     sex: Mapped[Sex] = MappedColumn(String, nullable=False)
     birth_date: Mapped[date] = MappedColumn(String, nullable=False)
-    account_status: Mapped[UserStatus] = MappedColumn(
-        String, nullable=False, default="active"
+    languages: Mapped[dict | None] = MappedColumn(JSONB, nullable=True)
+    user_status: Mapped[UserStatus] = MappedColumn(
+        String, nullable=False, default=UserStatus.ACTIVE
     )
-    languages: Mapped[dict] = MappedColumn(JSONB, nullable=True)
-    med_cars: Mapped[dict[MedCartType, MedCard]] = MappedColumn(JSONB, nullable=False)
+    user_account_status: Mapped[UserAccountStatus] = MappedColumn(
+        String, nullable=False, default=UserAccountStatus.BASE
+    )
+    user_roles: Mapped[Role] = MappedColumn(
+        String, nullable=False, default=Role.CANDIDATE
+    )
+    telegram_tag: Mapped[str | None] = MappedColumn(String, nullable=True)
+    telegram_link: Mapped[str | None] = MappedColumn(
+        Computed("https://t.me/" + telegram_tag), nullable=True
+    )
+
+
+class UserMedCard(Base):
+    __tablename__ = "user_med_cards"
+    user_med_card_id: Mapped[int] = MappedColumn(Integer, primary_key=True)
+    user_uuid: Mapped[UUID] = MappedColumn(
+        PG_UUID, ForeignKey("users.user_uuid"), nullable=False
+    )
+    med_card_id: Mapped[int] = MappedColumn(
+        Integer, ForeignKey("med_cards.med_card_id"), nullable=False
+    )
+    med_card_created: Mapped[date] = MappedColumn(
+        Date, nullable=False, default=datetime.now(timezone.utc)
+    )
