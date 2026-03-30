@@ -71,7 +71,7 @@ class User(Base):
     )
     telegram_tag: Mapped[str | None] = MappedColumn(String, nullable=True)
     telegram_link: Mapped[str | None] = MappedColumn(
-        Computed("https://t.me/" + telegram_tag), nullable=True
+        Computed(f"https://t.me/{telegram_tag}"), nullable=True
     )
 
 
